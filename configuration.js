@@ -1,6 +1,9 @@
 let configuration = {
   port: 8421,
   title: 'iOUhFOipoj823joOIUo',
+  ui: {
+    directory: '../scarecrow/build',
+  },
   module: [
     {
       title: '总览',
