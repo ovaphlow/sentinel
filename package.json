@@ -1,0 +1,19 @@
+{
+  "name": "sentinel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/ovaphlow/sentinel.git",
+  "author": "ovaphlow <ovaphlow@live.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@koa/router": "^10.0.0",
+    "bunyan": "^1.8.14",
+    "koa": "^2.13.0",
+    "koa-mount": "^4.0.0",
+    "koa-static": "^5.0.0",
+    "mysql2": "^2.2.5"
+  },
+  "devDependencies": {
+    "prettier": "^2.1.2"
+  }
+}
