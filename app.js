@@ -5,6 +5,7 @@ const os = require('os');
 
 const Koa = require('koa');
 const Router = require('@koa/router');
+const bodyParser = require('koa-bodyparser');
 const mount = require('koa-mount');
 const serve = require('koa-static');
 
@@ -39,6 +40,12 @@ config.module.forEach((iter) => {
   }
 });
 
+app.use(
+  bodyParser({
+    jsonLimit: '8mb',
+  }),
+);
+
 app.use(async (ctx, next) => {
   if (ctx.request.url.indexOf('/api/') !== 0) {
     next();
@@ -59,8 +66,18 @@ const router = new Router({
   prefix: '/api',
 });
 
-router.get('/', async (ctx) => {
+router.get('/info', async (ctx) => {
   ctx.response.body = config;
+});
+
+router.post('/sign-up', async (ctx) => {
+  logger.info(ctx.request.body);
+  ctx.response.status = 200;
+});
+
+router.post('/sign-in', async (ctx) => {
+  logger.info(ctx.request.body);
+  ctx.response.status = 200;
 });
 
 app.use(router.routes());

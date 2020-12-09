@@ -9,7 +9,7 @@ const logger = bunyan.createLogger({
     },
     {
       level: 'error',
-      path: './sentinel-error.log',
+      path: './log/sentinel-error.log',
     },
   ],
 });
