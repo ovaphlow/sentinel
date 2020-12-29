@@ -164,6 +164,118 @@ router.post('/sign-in', async (ctx) => {
   }
 });
 
+router.get('/setting/list', async (ctx) => {
+  try {
+    const { category } = ctx.request.query || '';
+    if (!category) {
+      ctx.response.body = [];
+      return;
+    }
+    const sql = `
+    select id, origin_id, parent_id, category,
+      json_doc->'$.name' as name,
+      json_doc->'$.value' as value,
+      json_doc->'$.remark' as remark
+    from setting
+    where category = ?
+    order by id desc
+    limit 100
+    `;
+    const cnx = persistence.promise();
+    const [result] = await cnx.query(sql, category);
+    ctx.response.body = result;
+  } catch (err) {
+    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
+    ctx.response.status = 500;
+  }
+});
+
+router.get('/setting/:id', async (ctx) => {
+  try {
+    const sql = `
+    select id, origin_id, parent_id, category,
+      json_doc->'$.name' as name,
+      json_doc->'$.value' as value,
+      json_doc->'$.remark' as remark
+    from setting
+    where id = ?
+    `;
+    const cnx = persistence.promise();
+    const [result] = await cnx.query(sql, [parseInt(ctx.params.id, 10)]);
+    ctx.response.body = result.length === 1 ? result[0] : {};
+  } catch (err) {
+    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
+    ctx.response.status = 500;
+  }
+});
+
+router.put('/setting/:id', async (ctx) => {
+  try {
+    const sql = `
+    update setting
+    set origin_id = ?,
+      parent_id = ?,
+      category = ?,
+      json_doc = ?
+    where id = ?
+    `;
+    const cnx = persistence.promise();
+    await cnx.query(sql, [
+      parseInt(ctx.request.body.origin_id, 10),
+      parseInt(ctx.request.body.parent_id, 10),
+      ctx.request.body.category,
+      JSON.stringify({
+        name: ctx.request.body.name,
+        value: ctx.request.body.value,
+        remark: ctx.request.body.remark,
+      }),
+      parseInt(ctx.params.id, 10),
+    ]);
+    ctx.response.status = 200;
+  } catch (err) {
+    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
+    ctx.response.status = 500;
+  }
+});
+
+router.delete('/setting/:id', async (ctx) => {
+  try {
+    const sql = 'delete from setting where id = ?';
+    const cnx = persistence.promise();
+    await cnx.query(sql, [parseInt(ctx.params.id, 10)]);
+    ctx.response.status = 200;
+  } catch (err) {
+    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
+    ctx.response.status = 500;
+  }
+});
+
+router.post('/setting', async (ctx) => {
+  try {
+    const sql = `
+    insert into setting
+      (origin_id, parent_id, category, json_doc)
+    values
+      (?, ?, ?, ?)
+    `;
+    const cnx = persistence.promise();
+    await cnx.query(sql, [
+      ctx.request.body.origin_id,
+      ctx.request.body.parent_id,
+      ctx.request.body.category,
+      JSON.stringify({
+        name: ctx.request.body.name,
+        value: ctx.request.body.value,
+        remark: ctx.request.body.remark,
+      }),
+    ]);
+    ctx.response.status = 200;
+  } catch (err) {
+    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
+    ctx.response.status = 500;
+  }
+});
+
 app.use(router.routes());
 app.use(router.allowedMethods());
 
