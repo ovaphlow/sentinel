@@ -12,11 +12,11 @@ let configuration = {
     },
   ],
   persistence: {
-    user: '',
-    password: '',
-    host: '',
+    user: 'ovaphlow',
+    password: 'ovaph@HD.1123',
+    host: '211.159.150.3',
     port: 3306,
-    database: '',
+    database: 'ovaphlow',
   },
 };
 

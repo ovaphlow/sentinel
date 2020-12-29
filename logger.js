@@ -5,7 +5,7 @@ const logger = bunyan.createLogger({
   streams: [
     {
       level: 'info',
-      stream: process.stdout,
+      stream: process.stdout, // eslint-disable-line
     },
     {
       level: 'error',

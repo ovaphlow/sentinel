@@ -13,6 +13,7 @@
     "mysql2": "^2.2.5"
   },
   "devDependencies": {
+    "eslint": "^7.16.0",
     "prettier": "^2.2.1"
   },
   "scripts": {
