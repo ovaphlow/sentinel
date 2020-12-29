@@ -8,10 +8,47 @@ const Router = require('@koa/router');
 const bodyParser = require('koa-bodyparser');
 const mount = require('koa-mount');
 const serve = require('koa-static');
+const yaml = require('js-yaml');
+const mysql = require('mysql2');
 
-const config = require('./configuration');
+const configuration_template = require('./configuration_template');
 const logger = require('./logger');
-const persistence = require('./persistence');
+// const persistence = require('./persistence');
+
+let config = {};
+
+module.exports.config = config;
+
+function saveConfig(conf_path, config) {
+  fs.writeFile(conf_path, config, (err) => {
+    logger.error(`写入配置文件(${conf_path})失败`);
+    logger.error(err);
+  });
+}
+
+// 配置文件
+(() => {
+  const conf_path = './configuration.yaml';
+  if (fs.existsSync(conf_path)) {
+    config = yaml.safeLoad(fs.readFileSync(conf_path, 'utf8'));
+  } else {
+    config = yaml.safeDump(configuration_template, { sortKeys: true });
+    saveConfig(conf_path, config);
+  }
+})();
+
+const persistence = mysql.createPool({
+  user: config.persistence.user,
+  password: config.persistence.password,
+  host: config.persistence.host,
+  port: config.persistence.port,
+  database: config.persistence.database,
+  waitForConnections: true,
+  connectionLimit: os.cpus().length,
+  queueLimit: os.cpus().length,
+});
+
+module.exports.persistence = persistence;
 
 const app = new Koa();
 
@@ -70,7 +107,9 @@ const router = new Router({
 });
 
 router.get('/info', async (ctx) => {
-  ctx.response.body = config;
+  ctx.response.body = {
+    title: config.persistence.title,
+  };
 });
 
 // 注册

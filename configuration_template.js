@@ -1,4 +1,5 @@
-let configuration = {
+// 配置文件模板
+const configuration = {
   port: 8421,
   title: 'iOUhFOipoj823joOIUo',
   ui: {
