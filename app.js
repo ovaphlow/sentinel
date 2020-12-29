@@ -108,7 +108,7 @@ const router = new Router({
 
 router.get('/info', async (ctx) => {
   ctx.response.body = {
-    title: config.persistence.title,
+    title: config.title,
   };
 });
 
