@@ -178,7 +178,28 @@ router.get('/setting/list', async (ctx) => {
       limit 100
       `;
       const cnx = persistence.promise();
-      const [result] = await cnx.query(sql, category);
+      const [result] = await cnx.query(sql);
+      ctx.response.body = result;
+    } else if (category === 'filter') {
+      const sql = `
+      select id, origin_id, parent_id, category,
+        json_doc->'$.name' as name,
+        json_doc->'$.value' as value,
+        json_doc->'$.remark' as remark
+      from setting
+      where category = ?
+        and (
+          position(? in json_doc->'$.name') > 0
+          or position(? in json_doc->'$.value') > 0
+        )
+      limit 100
+      `;
+      const cnx = persistence.promise();
+      const [result] = await cnx.query(sql, [
+        ctx.request.query.filter_category || '',
+        ctx.request.query.filter_keyword || '',
+        ctx.request.query.filter_keyword || '',
+      ]);
       ctx.response.body = result;
     } else if (category === 'list-group') {
       const sql = `
@@ -188,21 +209,10 @@ router.get('/setting/list', async (ctx) => {
       order by category
       `;
       const cnx = persistence.promise();
-      const [result] = await cnx.query(sql, category);
+      const [result] = await cnx.query(sql);
       ctx.response.body = result;
     } else {
-      const sql = `
-      select id, origin_id, parent_id, category,
-        json_doc->'$.name' as name,
-        json_doc->'$.value' as value,
-        json_doc->'$.remark' as remark
-      from setting
-      where category = ?
-      order by id desc
-      `;
-      const cnx = persistence.promise();
-      const [result] = await cnx.query(sql, category);
-      ctx.response.body = result;
+      ctx.response.body = [];
     }
   } catch (err) {
     logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
@@ -279,6 +289,7 @@ router.post('/setting', async (ctx) => {
       (?, ?, ?, ?)
     `;
     const cnx = persistence.promise();
+    logger.info(ctx.request.body);
     await cnx.query(sql, [
       ctx.request.body.origin_id,
       ctx.request.body.parent_id,
