@@ -168,22 +168,42 @@ router.get('/setting/list', async (ctx) => {
   try {
     const { category } = ctx.request.query || '';
     if (!category) {
-      ctx.response.body = [];
-      return;
+      const sql = `
+      select id, origin_id, parent_id, category,
+        json_doc->'$.name' as name,
+        json_doc->'$.value' as value,
+        json_doc->'$.remark' as remark
+      from setting
+      order by id desc
+      limit 100
+      `;
+      const cnx = persistence.promise();
+      const [result] = await cnx.query(sql, category);
+      ctx.response.body = result;
+    } else if (category === 'list-group') {
+      const sql = `
+      select category
+      from setting
+      group by category
+      order by category
+      `;
+      const cnx = persistence.promise();
+      const [result] = await cnx.query(sql, category);
+      ctx.response.body = result;
+    } else {
+      const sql = `
+      select id, origin_id, parent_id, category,
+        json_doc->'$.name' as name,
+        json_doc->'$.value' as value,
+        json_doc->'$.remark' as remark
+      from setting
+      where category = ?
+      order by id desc
+      `;
+      const cnx = persistence.promise();
+      const [result] = await cnx.query(sql, category);
+      ctx.response.body = result;
     }
-    const sql = `
-    select id, origin_id, parent_id, category,
-      json_doc->'$.name' as name,
-      json_doc->'$.value' as value,
-      json_doc->'$.remark' as remark
-    from setting
-    where category = ?
-    order by id desc
-    limit 100
-    `;
-    const cnx = persistence.promise();
-    const [result] = await cnx.query(sql, category);
-    ctx.response.body = result;
   } catch (err) {
     logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
     ctx.response.status = 500;
