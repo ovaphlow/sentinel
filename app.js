@@ -164,10 +164,11 @@ router.post('/sign-in', async (ctx) => {
   }
 });
 
-router.get('/setting/list', async (ctx) => {
+router.put('/setting/list', async (ctx) => {
   try {
     const { category } = ctx.request.query || '';
     if (!category) {
+      const offset = ctx.request.body.page || 0;
       const sql = `
       select id, origin_id, parent_id, category,
         json_doc->'$.name' as name,
@@ -175,10 +176,10 @@ router.get('/setting/list', async (ctx) => {
         json_doc->'$.remark' as remark
       from setting
       order by id desc
-      limit 100
+      limit ?, 30
       `;
       const cnx = persistence.promise();
-      const [result] = await cnx.query(sql);
+      const [result] = await cnx.query(sql, [offset * 30]);
       ctx.response.body = result;
     } else if (category === 'filter') {
       const sql = `
@@ -196,9 +197,9 @@ router.get('/setting/list', async (ctx) => {
       `;
       const cnx = persistence.promise();
       const [result] = await cnx.query(sql, [
-        ctx.request.query.filter_category || '',
-        ctx.request.query.filter_keyword || '',
-        ctx.request.query.filter_keyword || '',
+        ctx.request.body.category || '',
+        ctx.request.body.keyword || '',
+        ctx.request.body.keyword || '',
       ]);
       ctx.response.body = result;
     } else if (category === 'list-group') {
