@@ -20,9 +20,13 @@ let config = {};
 module.exports.config = config;
 
 function saveConfig(conf_path, config) {
+  logger.info('conf-path', conf_path);
+  logger.info('config', config);
   fs.writeFile(conf_path, config, (err) => {
-    logger.error(`写入配置文件(${conf_path})失败`);
-    logger.error(err);
+    if (err) {
+      logger.error(`写入配置文件(${conf_path})失败`);
+      logger.error(err);
+    }
   });
 }
 

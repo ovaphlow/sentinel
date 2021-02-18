@@ -1,6 +1,6 @@
 // 配置文件模板
 const configuration = {
-  port: 8421,
+  port: 34200,
   title: 'iOUhFOipoj823joOIUo',
   ui: {
     directory: '../scarecrow/build',
@@ -8,7 +8,7 @@ const configuration = {
   module: [
     {
       title: '总览',
-      directory: 'hengda-dashboard',
+      directory: 'dashboard',
       path: '/dashboard',
     },
   ],
