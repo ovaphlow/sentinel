@@ -13,6 +13,7 @@ const mysql = require('mysql2');
 
 const configuration_template = require('./configuration_template');
 const logger = require('./logger');
+const { exit } = require('process');
 // const persistence = require('./persistence');
 
 let config = {};
@@ -20,9 +21,7 @@ let config = {};
 module.exports.config = config;
 
 function saveConfig(conf_path, config) {
-  logger.info('conf-path', conf_path);
-  logger.info('config', config);
-  fs.writeFile(conf_path, config, (err) => {
+  fs.writeFileSync(conf_path, config, (err) => {
     if (err) {
       logger.error(`写入配置文件(${conf_path})失败`);
       logger.error(err);
@@ -34,10 +33,16 @@ function saveConfig(conf_path, config) {
 (() => {
   const conf_path = './configuration.yaml';
   if (fs.existsSync(conf_path)) {
-    config = yaml.safeLoad(fs.readFileSync(conf_path, 'utf8'));
+    config = yaml.load(fs.readFileSync(conf_path, 'utf8'));
   } else {
-    config = yaml.safeDump(configuration_template, { sortKeys: true });
+    logger.info(`首次运行`);
+    config = yaml.dump(configuration_template, { sortKeys: true });
+    logger.info('读取配置文件模板');
+    logger.info(config);
     saveConfig(conf_path, config);
+    logger.info(`生成配置文件 ${conf_path}`);
+    logger.info('请编辑配置文件后再次运行');
+    exit();
   }
 })();
 
@@ -116,6 +121,16 @@ router.get('/info', async (ctx) => {
   };
 });
 
+router.get('/configuration', async (ctx) => {
+  logger.info(ctx.request.query.secret_key);
+  logger.info(config.secret_key);
+  if (ctx.request.query.secret_key !== config.secret_key) {
+    ctx.response.status = 403;
+    return;
+  }
+  ctx.response.body = config;
+});
+
 // 注册
 router.post('/sign-up', async (ctx) => {
   try {
@@ -141,12 +156,12 @@ router.post('/sign-up', async (ctx) => {
 router.post('/sign-in', async (ctx) => {
   try {
     const sql = `
-    select id, username,
-      json_doc->'$.password' as password
-    from staff
-    where username = ?
-      and json_doc->'$.password' = ?
-    `;
+        select id, username,
+          json_doc->'$.password' as password
+        from staff
+        where username = ?
+          and json_doc->'$.password' = ?
+        `;
     const pool = persistence.promise();
     const [result] = await pool.query(sql, [
       ctx.request.body.username,
@@ -174,31 +189,31 @@ router.put('/setting/list', async (ctx) => {
     if (!category) {
       const offset = ctx.request.body.page || 0;
       const sql = `
-      select id, origin_id, parent_id, category,
-        json_doc->'$.name' as name,
-        json_doc->'$.value' as value,
-        json_doc->'$.remark' as remark
-      from setting
-      order by id desc
-      limit ?, 30
-      `;
+          select id, origin_id, parent_id, category,
+            json_doc->'$.name' as name,
+            json_doc->'$.value' as value,
+            json_doc->'$.remark' as remark
+          from setting
+          order by id desc
+          limit ?, 30
+          `;
       const cnx = persistence.promise();
       const [result] = await cnx.query(sql, [offset * 30]);
       ctx.response.body = result;
     } else if (category === 'filter') {
       const sql = `
-      select id, origin_id, parent_id, category,
-        json_doc->'$.name' as name,
-        json_doc->'$.value' as value,
-        json_doc->'$.remark' as remark
-      from setting
-      where category = ?
-        and (
-          position(? in json_doc->'$.name') > 0
-          or position(? in json_doc->'$.value') > 0
-        )
-      limit 100
-      `;
+          select id, origin_id, parent_id, category,
+            json_doc->'$.name' as name,
+            json_doc->'$.value' as value,
+            json_doc->'$.remark' as remark
+          from setting
+          where category = ?
+            and (
+              position(? in json_doc->'$.name') > 0
+              or position(? in json_doc->'$.value') > 0
+            )
+          limit 100
+          `;
       const cnx = persistence.promise();
       const [result] = await cnx.query(sql, [
         ctx.request.body.category || '',
@@ -208,11 +223,11 @@ router.put('/setting/list', async (ctx) => {
       ctx.response.body = result;
     } else if (category === 'list-group') {
       const sql = `
-      select category
-      from setting
-      group by category
-      order by category
-      `;
+          select category
+          from setting
+          group by category
+          order by category
+          `;
       const cnx = persistence.promise();
       const [result] = await cnx.query(sql);
       ctx.response.body = result;
@@ -228,13 +243,13 @@ router.put('/setting/list', async (ctx) => {
 router.get('/setting/:id', async (ctx) => {
   try {
     const sql = `
-    select id, origin_id, parent_id, category,
-      json_doc->'$.name' as name,
-      json_doc->'$.value' as value,
-      json_doc->'$.remark' as remark
-    from setting
-    where id = ?
-    `;
+        select id, origin_id, parent_id, category,
+          json_doc->'$.name' as name,
+          json_doc->'$.value' as value,
+          json_doc->'$.remark' as remark
+        from setting
+        where id = ?
+        `;
     const cnx = persistence.promise();
     const [result] = await cnx.query(sql, [parseInt(ctx.params.id, 10)]);
     ctx.response.body = result.length === 1 ? result[0] : {};
@@ -247,13 +262,13 @@ router.get('/setting/:id', async (ctx) => {
 router.put('/setting/:id', async (ctx) => {
   try {
     const sql = `
-    update setting
-    set origin_id = ?,
-      parent_id = ?,
-      category = ?,
-      json_doc = ?
-    where id = ?
-    `;
+        update setting
+        set origin_id = ?,
+          parent_id = ?,
+          category = ?,
+          json_doc = ?
+        where id = ?
+        `;
     const cnx = persistence.promise();
     await cnx.query(sql, [
       parseInt(ctx.request.body.origin_id, 10),
@@ -288,11 +303,11 @@ router.delete('/setting/:id', async (ctx) => {
 router.post('/setting', async (ctx) => {
   try {
     const sql = `
-    insert into setting
-      (origin_id, parent_id, category, json_doc)
-    values
-      (?, ?, ?, ?)
-    `;
+        insert into setting
+          (origin_id, parent_id, category, json_doc)
+        values
+          (?, ?, ?, ?)
+        `;
     const cnx = persistence.promise();
     logger.info(ctx.request.body);
     await cnx.query(sql, [
