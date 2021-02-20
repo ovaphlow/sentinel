@@ -70,7 +70,7 @@ app.env = 'production';
 //   }),
 // );
 
-config.module.forEach((iter) => {
+config.ui_module.forEach((iter) => {
   // eslint-disable-next-line
   if (fs.existsSync(`${__dirname}/../../${iter.directory}`)) {
     app.use(
@@ -105,9 +105,9 @@ app.use(async (ctx, next) => {
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
-config.module.forEach((iter) => {
+config.api_module.forEach((iter) => {
   if (iter.enabled) {
-    app.use(mount('/', require(`../../${iter.directory}/api/index`)));
+    app.use(mount('/', require(`../${iter.directory}/index`)));
   }
 });
 
@@ -122,8 +122,6 @@ router.get('/info', async (ctx) => {
 });
 
 router.get('/configuration', async (ctx) => {
-  logger.info(ctx.request.query.secret_key);
-  logger.info(config.secret_key);
   if (ctx.request.query.secret_key !== config.secret_key) {
     ctx.response.status = 403;
     return;

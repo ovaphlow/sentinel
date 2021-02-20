@@ -6,7 +6,14 @@ const configuration = {
   ui: {
     directory: '../scarecrow/build',
   },
-  module: [
+  api_module: [
+    {
+      directory: 'logbook',
+      enabled: true,
+      path: '/logbook',
+    },
+  ],
+  ui_module: [
     // {
     //   title: '总览',
     //   directory: 'dashboard',
