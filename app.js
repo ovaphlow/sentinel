@@ -70,6 +70,7 @@ app.env = 'production';
 //   }),
 // );
 
+/*
 config.ui_module.forEach((iter) => {
   // eslint-disable-next-line
   if (fs.existsSync(`${__dirname}/../../${iter.directory}`)) {
@@ -88,6 +89,7 @@ config.ui_module.forEach((iter) => {
     iter.enabled = false;
   }
 });
+*/
 
 app.use(
   bodyParser({
@@ -105,11 +107,13 @@ app.use(async (ctx, next) => {
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
+/*
 config.api_module.forEach((iter) => {
   if (iter.enabled) {
     app.use(mount('/', require(`../${iter.directory}/index`)));
   }
 });
+*/
 
 const router = new Router({
   prefix: '/api',
