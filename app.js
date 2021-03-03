@@ -126,6 +126,9 @@ router.get('/configuration', async (ctx) => {
     ctx.response.status = 403;
     return;
   }
+});
+
+router.post('/sentinel', async (ctx) => {
   ctx.response.body = config;
 });
 

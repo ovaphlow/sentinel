@@ -10,6 +10,7 @@
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
     "koa-mount": "^4.0.0",
+    "koa-proxies": "^0.11.0",
     "koa-static": "^5.0.0",
     "mysql2": "^2.2.5"
   },
@@ -18,7 +19,7 @@
     "prettier": "^2.2.1"
   },
   "scripts": {
-    "start": "node app.js | bunyan",
+    "start": "node app.js | bunyan -o short",
     "format": "prettier . --write",
     "lint": "eslint ."
   }
