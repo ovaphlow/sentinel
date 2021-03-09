@@ -1,3 +1,6 @@
+/**
+ * 2021-03 反代测试 WIP 未启用
+ */
 const http = require('http');
 const net = require('net');
 const { URL } = require('url');
@@ -14,9 +17,11 @@ proxy.on('connect', (req, clientSocket, head) => {
   const { port, hostname } = new URL(`http://${req.url}`);
   console.info(hostname, port);
   const serverSocket = net.connect(port || 80, hostname, () => {
-    clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
-                    'Proxy-agent: Node.js-Proxy\r\n' +
-                    '\r\n');
+    clientSocket.write(
+      'HTTP/1.1 200 Connection Established\r\n' +
+        'Proxy-agent: Node.js-Proxy\r\n' +
+        '\r\n',
+    );
     serverSocket.write(head);
     serverSocket.pipe(clientSocket);
     clientSocket.pipe(serverSocket);
@@ -25,13 +30,12 @@ proxy.on('connect', (req, clientSocket, head) => {
 
 // Now that proxy is running
 proxy.listen(1337, '127.0.0.1', () => {
-
   // Make a request to a tunneling proxy
   const options = {
     port: 1337,
     host: '127.0.0.1',
     method: 'CONNECT',
-    path: '127.0.0.1:6000/api/resume/1'
+    path: '127.0.0.1:6000/api/resume/1',
   };
 
   const req = http.request(options);
@@ -41,10 +45,12 @@ proxy.listen(1337, '127.0.0.1', () => {
     console.log('got connected!');
 
     // Make a request over an HTTP tunnel
-    socket.write('GET / HTTP/1.1\r\n' +
-                 'Host: www.google.com:80\r\n' +
-                 'Connection: close\r\n' +
-                 '\r\n');
+    socket.write(
+      'GET / HTTP/1.1\r\n' +
+        'Host: www.google.com:80\r\n' +
+        'Connection: close\r\n' +
+        '\r\n',
+    );
     socket.on('data', (chunk) => {
       console.log(chunk.toString());
     });
