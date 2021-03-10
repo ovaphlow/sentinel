@@ -3,7 +3,7 @@
  * 第一次启动时会根据此文件内容生成配置文件
  */
 const configuration = {
-  secret_key: '72347u8',
+  secret_key: 'by-ovaphlow',
   title: 'iOUhFOipoj823joOIUo',
   ui: {
     directory: '../scarecrow/build',
