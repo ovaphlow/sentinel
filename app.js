@@ -1,6 +1,3 @@
-const cluster = require('cluster');
-const fs = require('fs');
-const http = require('http');
 const os = require('os');
 
 const Koa = require('koa');
@@ -8,56 +5,56 @@ const Router = require('@koa/router');
 const bodyParser = require('koa-bodyparser');
 const mount = require('koa-mount');
 const serve = require('koa-static');
-const yaml = require('js-yaml');
 const mysql = require('mysql2');
 
-const configuration_template = require('./configuration_template');
 const logger = require('./logger');
-const { exit } = require('process');
-// const persistence = require('./persistence');
 
-let config = {};
+let configuration = {};
 
-module.exports.config = config;
-
-function saveConfig(conf_path, config) {
-  fs.writeFileSync(conf_path, config, (err) => {
-    if (err) {
-      logger.error(`写入配置文件(${conf_path})失败`);
-      logger.error(err);
-    }
-  });
-}
-
-// 配置文件
+/**
+ * 初始化配置
+ */
 (() => {
+  const fs = require('fs');
+
+  const yaml = require('js-yaml');
+
+  const configuration_template = require('./configuration_template');
+
+  const saveConfig = (conf_path, config) => {
+    fs.writeFileSync(conf_path, config, (err) => {
+      if (err) {
+        logger.error(`写入配置文件(${conf_path})失败`);
+        logger.error(err.stack);
+      }
+    });
+  };
+
   const conf_path = './configuration.yaml';
   if (fs.existsSync(conf_path)) {
-    config = yaml.load(fs.readFileSync(conf_path, 'utf8'));
+    configuration = yaml.load(fs.readFileSync(conf_path, 'utf8'));
   } else {
     logger.info(`首次运行`);
-    config = yaml.dump(configuration_template, { sortKeys: true });
+    const template = yaml.dump(configuration_template, { sortKeys: true });
     logger.info('读取配置文件模板');
-    logger.info(config);
-    saveConfig(conf_path, config);
+    logger.info(template);
+    saveConfig(conf_path, template);
     logger.info(`生成配置文件 ${conf_path}`);
     logger.info('请编辑配置文件后再次运行');
-    exit();
+    process.exit();
   }
 })();
 
 const persistence = mysql.createPool({
-  user: config.persistence.user,
-  password: config.persistence.password,
-  host: config.persistence.host,
-  port: config.persistence.port,
-  database: config.persistence.database,
+  user: configuration.persistence.user,
+  password: configuration.persistence.password,
+  host: configuration.persistence.host,
+  port: configuration.persistence.port,
+  database: configuration.persistence.database,
   waitForConnections: true,
   connectionLimit: os.cpus().length,
   queueLimit: os.cpus().length,
 });
-
-module.exports.persistence = persistence;
 
 const app = new Koa();
 
@@ -335,24 +332,33 @@ router.post('/setting', async (ctx) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-if (cluster.isMaster) {
-  logger.info(`主进程 PID:${process.pid}`); // eslint-disable-line
+(() => {
+  const cluster = require('cluster');
+  const http = require('http');
 
-  for (let i = 0; i < (Math.round(os.cpus().length / 3) || 1); i += 1) {
-    cluster.fork();
+  const port = parseInt(process.argv[2]) || 8421;
+
+  if (cluster.isMaster) {
+    logger.info(`主进程 PID:${process.pid}`); // eslint-disable-line
+
+    for (let i = 0; i < os.cpus().length; i += 1) {
+      cluster.fork();
+    }
+
+    cluster.on('online', (worker) => {
+      logger.info(
+        `子进程 PID:${worker.process.pid}, 端口:${port}`, // eslint-disable-line
+      );
+    });
+
+    cluster.on('exit', (worker, code, signal) => {
+      logger.info(
+        `子进程 PID:${worker.process.pid}终止，错误代码:${code}，信号:${signal}`, // eslint-disable-line
+      );
+      logger.info(`由主进程(PID:${process.pid})创建新的子进程`); // eslint-disable-line
+      cluster.fork();
+    });
+  } else {
+    http.createServer(app.callback()).listen(port);
   }
-
-  cluster.on('online', (worker) => {
-    logger.info(`子进程 PID:${worker.process.pid}, 端口:${config.port}`); // eslint-disable-line
-  });
-
-  cluster.on('exit', (worker, code, signal) => {
-    logger.info(
-      `子进程 PID:${worker.process.pid}终止，错误代码:${code}，信号:${signal}`, // eslint-disable-line
-    );
-    logger.info(`由主进程(PID:${process.pid})创建新的子进程`); // eslint-disable-line
-    cluster.fork();
-  });
-} else {
-  http.createServer(app.callback()).listen(config.port);
-}
+})();

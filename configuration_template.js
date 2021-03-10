@@ -1,6 +1,5 @@
 // 配置文件模板
 const configuration = {
-  port: 34200,
   secret_key: '72347u8',
   title: 'iOUhFOipoj823joOIUo',
   ui: {
