@@ -1,4 +1,7 @@
-// 配置文件模板
+/**
+ * 配置文件模板
+ * 第一次启动时会根据此文件内容生成配置文件
+ */
 const configuration = {
   secret_key: '72347u8',
   title: 'iOUhFOipoj823joOIUo',
