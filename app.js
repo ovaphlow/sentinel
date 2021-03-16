@@ -21,7 +21,9 @@ let configuration = {};
 
   const configuration_template = require('./configuration_template');
 
-  const saveConfig = (conf_path, config) => {
+  const conf_path = './configuration.yaml';
+
+  const saveConfig = (config) => {
     fs.writeFileSync(conf_path, config, (err) => {
       if (err) {
         logger.error(`写入配置文件(${conf_path})失败`);
@@ -30,7 +32,6 @@ let configuration = {};
     });
   };
 
-  const conf_path = './configuration.yaml';
   if (fs.existsSync(conf_path)) {
     configuration = yaml.load(fs.readFileSync(conf_path, 'utf8'));
   } else {
@@ -38,7 +39,7 @@ let configuration = {};
     const template = yaml.dump(configuration_template, { sortKeys: true });
     logger.info('读取配置文件模板');
     logger.info(template);
-    saveConfig(conf_path, template);
+    saveConfig(template);
     logger.info(`生成配置文件 ${conf_path}`);
     logger.info('请编辑配置文件后再次运行');
     process.exit();
@@ -59,6 +60,8 @@ const persistence = mysql.createPool({
 const app = new Koa();
 
 app.env = 'production';
+
+app.api_module = [[], []];
 
 // app.use(
 //   serve(`${__dirname}/../ui/build`, {
@@ -130,7 +133,13 @@ router.get('/configuration', async (ctx) => {
 });
 
 router.post('/sentinel', async (ctx) => {
-  ctx.response.body = config;
+  logger.info(ctx.request.body);
+  logger.info(ctx.request.ip);
+  logger.info(app.api_module);
+  app.api_module.push(ctx.request.body.module_name);
+  app.api_module.push(ctx.request.body.path_prefix);
+  ctx.response.body = configuration;
+  logger.info(app.api_module);
 });
 
 // 注册
@@ -336,7 +345,7 @@ app.use(router.allowedMethods());
   const cluster = require('cluster');
   const http = require('http');
 
-  const port = parseInt(process.argv[2]) || 8421;
+  const port = parseInt(process.argv[2]) || 34200;
 
   if (cluster.isMaster) {
     logger.info(`主进程 PID:${process.pid}`); // eslint-disable-line

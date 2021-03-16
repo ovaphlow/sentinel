@@ -3,25 +3,7 @@
  * 第一次启动时会根据此文件内容生成配置文件
  */
 const configuration = {
-  secret_key: 'by-ovaphlow',
-  title: 'iOUhFOipoj823joOIUo',
-  ui: {
-    directory: '../scarecrow/build',
-  },
-  api_module: [
-    {
-      directory: 'logbook',
-      enabled: true,
-      path: '/logbook',
-    },
-  ],
-  ui_module: [
-    // {
-    //   title: '总览',
-    //   directory: 'dashboard',
-    //   path: '/dashboard',
-    // },
-  ],
+  api_module: [[], []],
   persistence: {
     user: '',
     password: '',
@@ -29,6 +11,18 @@ const configuration = {
     port: 3306,
     database: '',
   },
+  secret_key: 'by-ovaphlow',
+  title: 'iOUhFOipoj823joOIUo',
+  ui: {
+    directory: '../scarecrow/build',
+  },
+  ui_module: [
+    // {
+    //   title: '总览',
+    //   directory: 'dashboard',
+    //   path: '/dashboard',
+    // },
+  ],
 };
 
 module.exports = configuration;
