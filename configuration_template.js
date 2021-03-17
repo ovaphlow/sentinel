@@ -3,7 +3,6 @@
  * 第一次启动时会根据此文件内容生成配置文件
  */
 const configuration = {
-  api_module: [[], []],
   persistence: {
     user: '',
     password: '',

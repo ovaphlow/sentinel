@@ -1,3 +1,4 @@
+const cluster = require('cluster');
 const os = require('os');
 
 const Koa = require('koa');
@@ -61,8 +62,6 @@ const app = new Koa();
 
 app.env = 'production';
 
-app.api_module = [[], []];
-
 // app.use(
 //   serve(`${__dirname}/../ui/build`, {
 //     maxage: 1000 * 60 * 60 * 24 * 7,
@@ -107,6 +106,12 @@ app.use(async (ctx, next) => {
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
+app.use(async (ctx, next) => {
+  logger.info('middleware');
+  logger.info(app.api_module);
+  await next();
+});
+
 /*
 config.api_module.forEach((iter) => {
   if (iter.enabled) {
@@ -133,13 +138,14 @@ router.get('/configuration', async (ctx) => {
 });
 
 router.post('/sentinel', async (ctx) => {
-  logger.info(ctx.request.body);
-  logger.info(ctx.request.ip);
-  logger.info(app.api_module);
-  app.api_module.push(ctx.request.body.module_name);
-  app.api_module.push(ctx.request.body.path_prefix);
+  // logger.info(ctx.request.body);
+  // logger.info(ctx.request.ip);
+  process.send({
+    option: 'api_module',
+    module: ctx.request.body.module_name,
+    path: ctx.request.body.path_prefix,
+  });
   ctx.response.body = configuration;
-  logger.info(app.api_module);
 });
 
 // 注册
@@ -341,33 +347,38 @@ router.post('/setting', async (ctx) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-(() => {
-  const cluster = require('cluster');
-  const http = require('http');
+const port = parseInt(process.argv[2]) || 34200;
 
-  const port = parseInt(process.argv[2]) || 34200;
+if (cluster.isMaster) {
+  logger.info(`主进程 PID:${process.pid}`); // eslint-disable-line
 
-  if (cluster.isMaster) {
-    logger.info(`主进程 PID:${process.pid}`); // eslint-disable-line
-
-    for (let i = 0; i < os.cpus().length; i += 1) {
-      cluster.fork();
-    }
-
-    cluster.on('online', (worker) => {
-      logger.info(
-        `子进程 PID:${worker.process.pid}, 端口:${port}`, // eslint-disable-line
-      );
-    });
-
-    cluster.on('exit', (worker, code, signal) => {
-      logger.info(
-        `子进程 PID:${worker.process.pid}终止，错误代码:${code}，信号:${signal}`, // eslint-disable-line
-      );
-      logger.info(`由主进程(PID:${process.pid})创建新的子进程`); // eslint-disable-line
-      cluster.fork();
-    });
-  } else {
-    http.createServer(app.callback()).listen(port);
+  for (let i = 0; i < os.cpus().length; i += 1) {
+    cluster.fork();
   }
-})();
+
+  cluster.on('online', (worker) => {
+    logger.info(
+      `子进程 PID:${worker.process.pid}, 端口:${port}`, // eslint-disable-line
+    );
+
+    worker.on('message', (message) => {
+      Object.keys(cluster.workers).forEach((id) => {
+        cluster.workers[id].send(message);
+      });
+    });
+  });
+
+  cluster.on('exit', (worker, code, signal) => {
+    logger.info(
+      `子进程 PID:${worker.process.pid}终止，错误代码:${code}，信号:${signal}`, // eslint-disable-line
+    );
+    logger.info(`由主进程(PID:${process.pid})创建新的子进程`); // eslint-disable-line
+    cluster.fork();
+  });
+} else {
+  app.api_module = [];
+  require('http').createServer(app.callback()).listen(port);
+  process.on('message', (message) => {
+    app.api_module.push(message.module);
+  });
+}
