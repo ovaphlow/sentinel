@@ -57,6 +57,8 @@ const persistence = mysql.createPool({
   queueLimit: os.cpus().length,
 });
 
+exports.persistence = persistence;
+
 const app = new Koa();
 
 app.env = 'production';
@@ -105,11 +107,13 @@ app.use(async (ctx, next) => {
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
+/*
 app.use(async (ctx, next) => {
   logger.info('middleware');
   logger.info(app.api_module);
   await next();
 });
+*/
 
 /*
 config.api_module.forEach((iter) => {
@@ -199,6 +203,7 @@ router.post('/sign-in', async (ctx) => {
   }
 });
 
+/*
 router.put('/setting/list', async (ctx) => {
   try {
     const { category } = ctx.request.query || '';
@@ -342,8 +347,15 @@ router.post('/setting', async (ctx) => {
     ctx.response.status = 500;
   }
 });
+*/
 
 app.use(router.routes());
 app.use(router.allowedMethods());
+
+(() => {
+  const router = require('./route-setting');
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+})();
 
 module.exports = app;
