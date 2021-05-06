@@ -3,8 +3,6 @@ const os = require('os');
 const Koa = require('koa');
 const Router = require('@koa/router');
 const bodyParser = require('koa-bodyparser');
-const mount = require('koa-mount');
-const serve = require('koa-static');
 const mysql = require('mysql2');
 
 const logger = require('./logger');
@@ -63,34 +61,6 @@ const app = new Koa();
 
 app.env = 'production';
 
-// app.use(
-//   serve(`${__dirname}/../ui/build`, {
-//     maxage: 1000 * 60 * 60 * 24 * 7,
-//     gzip: true,
-//   }),
-// );
-
-/*
-config.ui_module.forEach((iter) => {
-  // eslint-disable-next-line
-  if (fs.existsSync(`${__dirname}/../../${iter.directory}`)) {
-    app.use(
-      mount(
-        iter.path,
-        // eslint-disable-next-line
-        serve(`${__dirname}/../../${iter.directory}/ui/build/`, {
-          maxage: 1000 * 60 * 60 * 24 * 7,
-          gzip: true,
-        }),
-      ),
-    );
-    iter.enabled = true;
-  } else {
-    iter.enabled = false;
-  }
-});
-*/
-
 app.use(
   bodyParser({
     jsonLimit: '8mb',
@@ -106,22 +76,6 @@ app.use(async (ctx, next) => {
   await next();
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
-
-/*
-app.use(async (ctx, next) => {
-  logger.info('middleware');
-  logger.info(app.api_module);
-  await next();
-});
-*/
-
-/*
-config.api_module.forEach((iter) => {
-  if (iter.enabled) {
-    app.use(mount('/', require(`../${iter.directory}/index`)));
-  }
-});
-*/
 
 const router = new Router({
   prefix: '/api',
@@ -141,8 +95,6 @@ router.get('/configuration', async (ctx) => {
 });
 
 router.post('/sentinel', async (ctx) => {
-  // logger.info(ctx.request.body);
-  // logger.info(ctx.request.ip);
   process.send({
     option: 'api_module',
     module: ctx.request.body.module_name,
@@ -352,6 +304,7 @@ router.post('/setting', async (ctx) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
+// setting
 (() => {
   const router = require('./route-setting');
   app.use(router.routes());
