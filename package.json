@@ -9,8 +9,6 @@
     "js-yaml": "^4.1.0",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
-    "koa-mount": "^4.0.0",
-    "koa-static": "^5.0.0",
     "mysql2": "^2.2.5",
     "superagent": "^6.1.0"
   },
