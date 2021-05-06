@@ -68,9 +68,32 @@ app.use(
 );
 
 app.use(async (ctx, next) => {
-  if (ctx.request.url.indexOf('/api/') !== 0) {
-    next();
-    return;
+  logger.info(app.api_module, ctx.request.ip);
+  for (let i = 0; i < app.api_module.length; i += 1) {
+    const index = ctx.request.url.indexOf(app.api_module[i].path);
+    if (index < 0) {
+      continue;
+    } else {
+      const superagent = require('superagent');
+      const path = [
+        'http://',
+        app.api_module[i].ip,
+        ':',
+        app.api_module[i].port,
+        ctx.request.url,
+      ];
+      superagent
+        .get(path.join(''))
+        .then((response) => {
+          logger.warn('rreess', response.body);
+          ctx.response.status = 200;
+        })
+        .catch((err) => {
+          logger.error(err);
+          ctx.response.status = 500;
+        });
+      return;
+    }
   }
   logger.info(`--> ${ctx.request.method} ${ctx.request.url}`);
   await next();
@@ -95,10 +118,13 @@ router.get('/configuration', async (ctx) => {
 });
 
 router.post('/sentinel', async (ctx) => {
+  const ip = ctx.request.ip.split(':');
   process.send({
+    ip: ip[ip.length - 1],
     option: 'api_module',
     module: ctx.request.body.module_name,
     path: ctx.request.body.path_prefix,
+    port: ctx.request.body.port,
   });
   ctx.response.body = configuration;
 });

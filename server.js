@@ -36,6 +36,6 @@ if (cluster.isMaster) {
   app.api_module = [];
   require('http').createServer(app.callback()).listen(port);
   process.on('message', (message) => {
-    app.api_module.push(message.module);
+    app.api_module.push(message);
   });
 }
