@@ -5,16 +5,16 @@
   "license": "MIT",
   "dependencies": {
     "@koa/router": "^10.0.0",
+    "axios": "^0.21.1",
     "bunyan": "^1.8.15",
     "js-yaml": "^4.1.0",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
-    "mysql2": "^2.2.5",
-    "superagent": "^6.1.0"
+    "mysql2": "^2.2.5"
   },
   "devDependencies": {
-    "eslint": "^7.24.0",
-    "prettier": "^2.2.1"
+    "eslint": "^7.26.0",
+    "prettier": "^2.3.0"
   },
   "scripts": {
     "serve": "node server.js | bunyan -o short",

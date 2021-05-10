@@ -74,7 +74,6 @@ app.use(async (ctx, next) => {
     if (index < 0) {
       continue;
     } else {
-      const superagent = require('superagent');
       const path = [
         'http://',
         app.api_module[i].ip,
@@ -82,16 +81,36 @@ app.use(async (ctx, next) => {
         app.api_module[i].port,
         ctx.request.url,
       ];
-      superagent
-        .get(path.join(''))
-        .then((response) => {
-          logger.warn('rreess', response.body);
-          ctx.response.status = 200;
-        })
-        .catch((err) => {
-          logger.error(err);
-          ctx.response.status = 500;
+
+      const options = {
+        hostname: app.api_module[i].ip,
+        port: app.api_module[i].port,
+        path: ctx.request.url,
+        method: ctx.request.method,
+        headers: ctx.request.header,
+      };
+
+      const req = require('http').request(options, (res) => {
+        logger.info(`STATUS: ${res.statusCode}`);
+        logger.info(`HEADERS: ${JSON.stringify(res.headers)}`);
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          logger.info(`BODY: ${chunk}`);
+          ctx.response.body = chunk;
+          logger.info('response end');
         });
+        res.on('end', () => {
+          logger.info('No more data in response.');
+        });
+      });
+
+      req.on('error', (e) => {
+        logger.error(`problem with request: ${e.message}`);
+      });
+
+      req.write('');
+      req.end();
+      logger.info('1123');
       return;
     }
   }
