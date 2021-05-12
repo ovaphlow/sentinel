@@ -68,6 +68,7 @@ app.use(
 );
 
 app.use(async (ctx, next) => {
+  const axios = require('axios');
   logger.info(app.api_module, ctx.request.ip);
   for (let i = 0; i < app.api_module.length; i += 1) {
     const index = ctx.request.url.indexOf(app.api_module[i].path);
@@ -81,37 +82,19 @@ app.use(async (ctx, next) => {
         app.api_module[i].port,
         ctx.request.url,
       ];
-
-      const options = {
-        hostname: app.api_module[i].ip,
-        port: app.api_module[i].port,
-        path: ctx.request.url,
-        method: ctx.request.method,
-        headers: ctx.request.header,
-      };
-
-      const req = require('http').request(options, (res) => {
-        logger.info(`STATUS: ${res.statusCode}`);
-        logger.info(`HEADERS: ${JSON.stringify(res.headers)}`);
-        res.setEncoding('utf8');
-        res.on('data', (chunk) => {
-          logger.info(`BODY: ${chunk}`);
-          ctx.response.body = chunk;
-          logger.info('response end');
+      try {
+        const response = await axios({
+          method: ctx.request.method,
+          url: path.join(''),
+          headers: ctx.request.header,
+          data: ctx.request.body,
+          responseType: 'json', //'arraybuffer', 'document', _'json', 'text', 'stream', 'blob'(browser only)
         });
-        res.on('end', () => {
-          logger.info('No more data in response.');
-        });
-      });
-
-      req.on('error', (e) => {
-        logger.error(`problem with request: ${e.message}`);
-      });
-
-      req.write('');
-      req.end();
-      logger.info('1123');
-      return;
+        logger.info(response);
+      } catch (err) {
+        logger.error(err.stack);
+        ctx.response.status = 500;
+      }
     }
   }
   logger.info(`--> ${ctx.request.method} ${ctx.request.url}`);
