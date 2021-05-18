@@ -69,36 +69,54 @@ app.use(
 
 app.use(async (ctx, next) => {
   const axios = require('axios');
-  logger.info(app.api_module, ctx.request.ip);
-  for (let i = 0; i < app.api_module.length; i += 1) {
-    const index = ctx.request.url.indexOf(app.api_module[i].path);
-    if (index < 0) {
-      continue;
-    } else {
-      const path = [
-        'http://',
-        app.api_module[i].ip,
-        ':',
-        app.api_module[i].port,
-        ctx.request.url,
-      ];
-      try {
-        const response = await axios({
-          method: ctx.request.method,
-          url: path.join(''),
-          headers: ctx.request.header,
-          data: ctx.request.body,
-          responseType: 'json', //'arraybuffer', 'document', _'json', 'text', 'stream', 'blob'(browser only)
-        });
-        logger.info(response);
-      } catch (err) {
-        logger.error(err.stack);
-        ctx.response.status = 500;
-      }
-    }
-  }
+
   logger.info(`--> ${ctx.request.method} ${ctx.request.url}`);
-  await next();
+  // logger.info(app.api_module, ctx.request.ip);
+
+  let list = app.api_module.reduce((init, current) => {
+    if (ctx.request.url.indexOf(current.path) > -1) {
+      init.push(current);
+    }
+    return init;
+  }, []);
+  // logger.info('matched modules\n', list);
+
+  if (list.length) {
+    let index = Math.floor(Math.random() * list.length);
+    // console.info(index, list[index]);
+    const path = [
+      'http://',
+      list[index].host,
+      ':',
+      list[index].port,
+      ctx.request.url,
+    ];
+    try {
+      const response = await axios({
+        method: ctx.request.method,
+        url: path.join(''),
+        headers: ctx.request.header,
+        data: ctx.request.body,
+        responseType: 'json', //'arraybuffer', 'document', _'json', 'text', 'stream', 'blob'(browser only)
+      });
+      ctx.response.body = response.body;
+    } catch (err) {
+      logger.error(err.stack);
+      let mod = app.api_module.findIndex(
+        (element) =>
+          element.host === list[index].host &&
+          element.port === list[index].port,
+      );
+      if (app.api_module[mod].online === false) {
+        app.api_module.splice(mod, 1);
+      } else {
+        app.api_module[mod].online = false;
+      }
+      ctx.response.status = 500;
+    }
+  } else {
+    await next();
+  }
   logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
@@ -120,13 +138,12 @@ router.get('/configuration', async (ctx) => {
 });
 
 router.post('/sentinel', async (ctx) => {
-  const ip = ctx.request.ip.split(':');
+  let host = ctx.request.ip.split(':');
   process.send({
-    ip: ip[ip.length - 1],
     option: 'api_module',
-    module: ctx.request.body.module_name,
-    path: ctx.request.body.path_prefix,
+    host: host[host.length - 1],
     port: ctx.request.body.port,
+    path: ctx.request.body.path_prefix,
   });
   ctx.response.body = configuration;
 });
