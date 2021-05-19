@@ -120,13 +120,18 @@ app.use(async (ctx, next) => {
   }
 });
 
+app.use(async (ctx, next) => {
+  ctx.ps_cnx = persistence.promise();
+  await next();
+});
+
 const router = new Router({
   prefix: '/api',
 });
 
 router.get('/info', async (ctx) => {
   ctx.response.body = {
-    title: config.title,
+    title: configuration.title,
   };
 });
 
@@ -146,28 +151,6 @@ router.post('/sentinel', async (ctx) => {
     path: ctx.request.body.path_prefix,
   });
   ctx.response.body = configuration;
-});
-
-// 注册
-router.post('/sign-up', async (ctx) => {
-  try {
-    const sql = 'select count(*) as qty from staff where username = ?';
-    const pool = persistence.promise();
-    const [result] = await pool.query(sql, [ctx.request.body.username]);
-    if (result[0].qty > 0) {
-      ctx.response.status = 409;
-      return;
-    }
-    const sql1 = 'insert into staff (username, json_doc) values (?, ?)';
-    await pool.query(sql1, [
-      ctx.request.body.username,
-      JSON.stringify({ password: ctx.request.body.password }),
-    ]);
-    ctx.response.status = 200;
-  } catch (err) {
-    logger.error(`--> ${ctx.request.method} ${ctx.request.url} ${err}`);
-    ctx.response.status = 500;
-  }
 });
 
 router.post('/sign-in', async (ctx) => {
