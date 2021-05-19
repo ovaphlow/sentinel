@@ -68,9 +68,6 @@ app.use(
 );
 
 app.use(async (ctx, next) => {
-  const axios = require('axios');
-
-  logger.info(`--> ${ctx.request.method} ${ctx.request.url}`);
   // logger.info(app.api_module, ctx.request.ip);
 
   let list = app.api_module.reduce((init, current) => {
@@ -82,6 +79,8 @@ app.use(async (ctx, next) => {
   // logger.info('matched modules\n', list);
 
   if (list.length) {
+    const axios = require('axios');
+
     let index = Math.floor(Math.random() * list.length);
     // console.info(index, list[index]);
     const path = [
@@ -99,7 +98,7 @@ app.use(async (ctx, next) => {
         data: ctx.request.body,
         responseType: 'json', //'arraybuffer', 'document', _'json', 'text', 'stream', 'blob'(browser only)
       });
-      ctx.response.body = response.body;
+      ctx.response.body = response.data;
     } catch (err) {
       logger.error(err.stack);
       let mod = app.api_module.findIndex(
@@ -115,9 +114,10 @@ app.use(async (ctx, next) => {
       ctx.response.status = 500;
     }
   } else {
+    logger.info(`--> ${ctx.request.method} ${ctx.request.url}`);
     await next();
+    logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
   }
-  logger.info(`<-- ${ctx.request.method} ${ctx.request.url}`);
 });
 
 const router = new Router({
