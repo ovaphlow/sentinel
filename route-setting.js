@@ -9,6 +9,22 @@ const router = new Router({
 
 module.exports = router;
 
+const SQL_CREATE = `
+CREATE TABLE setting (
+	id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	category VARCHAR(20) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
+	ref_id INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	ref_id2 INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	name VARCHAR(50) NOT NULL DEFAULT '' COLLATE 'utf8mb4_general_ci',
+	json_doc JSON NOT NULL,
+	PRIMARY KEY (id) USING BTREE
+)
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=21
+;
+`;
+
 /**
  * 注册
  * to-do: salt, jwt
