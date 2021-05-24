@@ -1,0 +1,10 @@
+html,
+body {
+  background-color: lightgrey;
+  height: 100%;
+}
+
+.title {
+  background-color: lightslategrey;
+  /* background-color: white; */
+}

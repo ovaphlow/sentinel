@@ -67,6 +67,15 @@ app.use(
   }),
 );
 
+app.use(
+  require('koa-mount')(
+    '/sentinel',
+    require('koa-static')('../ui', {
+      // maxage: 1000 * 60 * 60 * 24 * 7, // 0
+    }),
+  ),
+);
+
 app.use(async (ctx, next) => {
   // logger.info(app.api_module, ctx.request.ip);
 
