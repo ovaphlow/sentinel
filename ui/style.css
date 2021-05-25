@@ -4,6 +4,10 @@ body {
   height: 100%;
 }
 
+#root {
+  height: 100%;
+}
+
 .title {
   background-color: lightslategrey;
   /* background-color: white; */
