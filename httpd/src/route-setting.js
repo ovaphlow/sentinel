@@ -1,7 +1,6 @@
 const Router = require('@koa/router');
 
 const logger = require('./logger');
-const { persistence } = require('./app');
 
 const router = new Router({
   prefix: '/api/setting',
@@ -25,21 +24,60 @@ AUTO_INCREMENT=21
 ;
 `;
 
+router.get('/token', async (ctx) => {
+  const { UnsecuredJWT } = require('jose/jwt/unsecured');
+
+  let jwt = new UnsecuredJWT({ id: 1123 }).encode();
+  logger.info('jwt:', jwt);
+  ctx.response.body = jwt;
+});
+
+router.get('/verify-token', async (ctx) => {
+  const { UnsecuredJWT } = require('jose/jwt/unsecured');
+
+  let token = ctx.request.query.token || '';
+  logger.info('token:', token);
+
+  let payload = UnsecuredJWT.decode(token, {});
+  logger.info('payload:', payload);
+
+  ctx.response.body = payload;
+});
+
 /**
- * 注册
- * to-do: salt, jwt
+ * 用户注册
+ * to-do: jwt
  * to-do: 关联表数据初始化
  */
 router.post('/user', async (ctx) => {
+  const crypto = require('crypto');
+
+  const { UnsecuredJWT } = require('jose/jwt/unsecured');
+
   try {
     let sql = `
+        select count(*) as qty
+        from setting
+        where name = ?
+          and category = '用户'
+        `;
+    let [result] = await ctx.ps_cnx.query(sql, [ctx.request.body.username]);
+    if (result[0].qty > 0) {
+      ctx.response.status = 409;
+      return;
+    }
+    let salt = crypto.randomBytes(4).toString('hex');
+    let hmac = crypto.createHmac('sha256', salt);
+    hmac.update(ctx.request.body.password);
+    let password_after_salt = hmac.digest('hex');
+    sql = `
         insert into
           setting (category, ref_id, ref_id2, name, json_doc)
           values ('用户', 0, 0, ?, ?)
         `;
-    let [result] = await ctx.ps_cnx.execute(sql, [
+    [result] = await ctx.ps_cnx.execute(sql, [
       ctx.request.body.username,
-      JSON.stringify({ password: ctx.request.body.password }),
+      JSON.stringify({ password: password_after_salt, salt: salt }),
     ]);
     sql = `
         select id, category, ref_id, ref_id2, name
@@ -48,7 +86,11 @@ router.post('/user', async (ctx) => {
         limit 1
         `;
     [result] = await ctx.ps_cnx.query(sql, [result.insertId]);
-    ctx.response.body = result.length === 1 ? result[0] : '{}';
+    if (result.length === 1) {
+      ctx.response.body = { jwt: new UnsecuredJWT({ ...result[0] }).encode() };
+    } else {
+      ctx.response.status = 401;
+    }
   } catch (err) {
     logger.error(err.stack);
     ctx.response.status = 500;

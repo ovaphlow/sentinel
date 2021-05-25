@@ -1,16 +1,16 @@
-import { reducer } from './miscellaneous';
+import { reducer } from './miscellaneous.mjs';
+import { Footer } from './component.mjs';
 
 const initial_user = {
   username: '',
   password: '',
-  password2: '',
 };
 
-function SignUp() {
+function SignIn() {
   const [title, setTitle] = React.useState('');
   const [user, dispatch] = React.useReducer(reducer, initial_user);
 
-  const handleSignUp = () => {
+  const handleSignIn = () => {
     if (!user.username || !user.password) {
       window.alert('请完整填写所需信息');
       return;
@@ -53,7 +53,7 @@ function SignUp() {
 
   return (
     <>
-      <div className="d-flex flex-column h-100 w-100">
+      <div className="d-flex flex-column h-100 w-100 min">
         <header>
           <h1 className="mx-2">{title}</h1>
           <hr />
@@ -63,7 +63,7 @@ function SignUp() {
           <div className="container-lg d-flex h-100 align-items-center justify-content-center">
             <div className="card shadow col-6 col-lg-4">
               <div className="card-header lead">
-                <strong>SIGN UP</strong>
+                <strong>SIGN IN</strong>
               </div>
 
               <div className="card-body">
@@ -102,37 +102,22 @@ function SignUp() {
                       }
                     />
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label">PASSWORD 2</label>
-                    <input
-                      type="password"
-                      value={user.password2}
-                      className="form-control"
-                      onChange={(event) =>
-                        dispatch({
-                          type: 'set',
-                          payload: {
-                            key: 'password2',
-                            value: event.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
                 </form>
               </div>
 
               <div className="card-footer d-grid gap-2">
-                <button className="btn btn-primary" onClick={handleSignUp}>
+                <button className="btn btn-primary" onClick={handleSignIn}>
                   SUBMIT
                 </button>
               </div>
             </div>
           </div>
         </main>
+
+        <Footer />
       </div>
     </>
   );
 }
 
-ReactDOM.render(<SignUp />, document.getElementById('root'));
+ReactDOM.render(<SignIn />, document.getElementById('root'));
