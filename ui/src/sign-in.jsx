@@ -63,13 +63,13 @@ function SignIn() {
           <div className="container-lg d-flex h-100 align-items-center justify-content-center">
             <div className="card shadow col-6 col-lg-4">
               <div className="card-header lead">
-                <strong>SIGN IN</strong>
+                <strong>用户登录</strong>
               </div>
 
               <div className="card-body">
                 <form className="row">
                   <div className="mb-3">
-                    <label className="form-label">USERNAME</label>
+                    <label className="form-label">用户名</label>
                     <input
                       type="text"
                       value={user.username}
@@ -86,7 +86,7 @@ function SignIn() {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">PASSWORD</label>
+                    <label className="form-label">密码</label>
                     <input
                       type="password"
                       value={user.password}
@@ -107,7 +107,7 @@ function SignIn() {
 
               <div className="card-footer d-grid gap-2">
                 <button className="btn btn-primary" onClick={handleSignIn}>
-                  SUBMIT
+                  提交
                 </button>
               </div>
             </div>
