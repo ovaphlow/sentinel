@@ -45,8 +45,48 @@ router.get('/verify-token', async (ctx) => {
 });
 
 /**
+ * 用户登录
+ */
+router.post('/user/sign-in', async (ctx) => {
+  const crypto = require('crypto');
+
+  const { UnsecuredJWT } = require('jose/jwt/unsecured');
+
+  try {
+    let sql = `
+        select id, category, ref_id, ref_id2, name
+          , json_extract(json_doc, '$.salt') as salt
+          , json_extract(json_doc, '$.password') as password
+        from setting
+        where name = ?
+          and category = '用户'
+        `;
+    let [result] = await ctx.ps_cnx.query(sql, [ctx.request.body.username]);
+    if (result.length === 0) {
+      ctx.response.status = 401;
+      return;
+    } else if (result.length > 1) {
+      ctx.response.status = 409;
+      return;
+    }
+    let hmac = crypto.createHmac('sha256', result[0].salt);
+    hmac.update(ctx.request.body.password);
+    let password_after_salt = hmac.digest('hex');
+    if (password_after_salt !== result[0].password) {
+      ctx.response.status = 401;
+      return;
+    }
+    result[0].salt = undefined;
+    result[0].password = undefined;
+    ctx.response.body = { jwt: new UnsecuredJWT({ ...result[0] }).encode() };
+  } catch (err) {
+    logger.error(err.stack);
+    ctx.response.status = 500;
+  }
+});
+
+/**
  * 用户注册
- * to-do: jwt
  * to-do: 关联表数据初始化
  */
 router.post('/user', async (ctx) => {

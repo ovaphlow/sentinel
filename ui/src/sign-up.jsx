@@ -44,6 +44,10 @@ function SignUp() {
       .catch((err) => window.alert(err));
   };
 
+  const handleBackward = () => {
+    // urlparams
+  };
+
   React.useEffect(() => {
     fetch('/api/info')
       .then((response) => response.json())
@@ -127,6 +131,19 @@ function SignUp() {
                 <button className="btn btn-primary" onClick={handleSignUp}>
                   提交
                 </button>
+                <a
+                  href="sign-in.html"
+                  className="text-center text-decoration-none mb-2"
+                >
+                  用户登录
+                </a>
+                <a
+                  href="#"
+                  className="text-center text-decoration-none"
+                  onClick={handleBackward}
+                >
+                  返回
+                </a>
               </div>
             </div>
           </div>

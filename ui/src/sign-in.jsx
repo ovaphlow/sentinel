@@ -15,12 +15,8 @@ function SignIn() {
       window.alert('请完整填写所需信息');
       return;
     }
-    if (user.password !== user.password2) {
-      window.alert('两次输入的密码不一致');
-      return;
-    }
 
-    fetch('/api/setting/user', {
+    fetch('/api/setting/user/sign-in', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -32,16 +28,24 @@ function SignIn() {
     })
       .then((response) => {
         if (response.status === 200) return response.json();
+        else if (response.status === 401) throw new Error('用户名或密码错误');
+        else if (response.status === 409) throw new Error('用户账号异常');
         else throw new Error('服务器错误');
       })
       .then((data) => {
         console.info(data);
+        // 附加jwt重定向到原地址
+        let to = new URLSearchParams(window.location.search).get('from');
+        to += `?token=${data.jwt}`;
+        console.log(to);
+        window.location = to;
       })
-      .catch((error) => {
-        console.error(error.stack);
-        window.alert(error.stack);
-      });
+      .catch((error) => window.alert(error));
   };
+
+  React.useEffect(() => {
+    console.log(window.location.search);
+  }, []);
 
   React.useEffect(() => {
     fetch('/api/info')
@@ -108,6 +112,19 @@ function SignIn() {
               <div className="card-footer d-grid gap-2">
                 <button className="btn btn-primary" onClick={handleSignIn}>
                   提交
+                </button>
+                <a
+                  href="sign-up.html"
+                  className="text-center text-decoration-none"
+                >
+                  注册新用户
+                </a>
+                <button
+                  type="button"
+                  className="btn btn-link text-center text-decoration-none"
+                  onClick={() => window.history.back()}
+                >
+                  返回
                 </button>
               </div>
             </div>

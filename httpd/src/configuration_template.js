@@ -11,16 +11,13 @@ const configuration = {
     database: '',
   },
   secret_key: 'by-ovaphlow',
-  title: 'iOUhFOipoj823joOIUo',
-  ui: {
-    directory: '../scarecrow/build',
-  },
+  title: 'SAMPLE TITLE',
   ui_module: [
-    // {
-    //   title: '总览',
-    //   directory: 'dashboard',
-    //   path: '/dashboard',
-    // },
+    {
+      title: 'sample',
+      path: '../ui/dist',
+      prefix: '',
+    },
   ],
 };
 
