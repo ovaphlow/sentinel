@@ -33,11 +33,8 @@ function SignIn() {
         else throw new Error('服务器错误');
       })
       .then((data) => {
-        console.info(data);
-        // 附加jwt重定向到原地址
         let to = new URLSearchParams(window.location.search).get('from');
         to += `?token=${data.jwt}`;
-        console.log(to);
         window.location = to;
       })
       .catch((error) => window.alert(error));
